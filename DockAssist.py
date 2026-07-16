@@ -1,5 +1,5 @@
 """
-DockAssist. — Ligand Pre-Screener for Molecular Docking
+DockAssist — Ligand Pre-Screener for Molecular Docking
 
 Accepts a ligand as:
 1. Compound or drug name
@@ -11,12 +11,13 @@ The input is converted to a molecular structure, analysed with RDKit,
 and summarised using molecular descriptors and Lipinski-style checks.
 
 Usage:
-    python ligand_scout.py
+    python dock_assist.py
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 from typing import Any
 
 import requests
@@ -36,6 +37,15 @@ class LigandInput:
     name: str
     smiles: str
     external_id: str | None = None
+
+
+@dataclass(frozen=True)
+class StructureMetadata:
+    pdb_id: str
+    title: str
+    experimental_method: str
+    resolution: float | None
+    ligand_code: str
 
 
 @dataclass(frozen=True)
@@ -178,39 +188,181 @@ def from_smiles(value: str) -> LigandInput:
     )
 
 
-def from_pdb_ligand_code(value: str) -> LigandInput:
-    """Resolve an RCSB PDB chemical component code."""
-    code = value.strip().upper()
 
-    if not code:
-        raise ValueError("PDB ligand code cannot be empty.")
+def _is_likely_small_molecule_ligand(
+    code: str,
+    name: str,
+    formula_weight: float | None,
+) -> bool:
+    """Exclude common solvents, ions and crystallisation additives."""
+    excluded_codes = {
+        "HOH", "DOD", "SO4", "PO4", "CL", "NA", "K", "CA", "MG", "MN",
+        "ZN", "FE", "CU", "CO", "NI", "CD", "IOD", "BR", "GOL", "EDO",
+        "PEG", "PG4", "ACT", "ACE", "FMT", "BME", "DMS", "MPD",
+    }
+    excluded_name_terms = {
+        "water", "sulfate", "phosphate", "chloride", "sodium", "potassium",
+        "calcium", "magnesium", "zinc", "glycerol", "ethylene glycol",
+    }
 
-    if len(code) > 5 or not code.isalnum():
-        raise ValueError(
-            "PDB ligand codes are short alphanumeric identifiers such as BEN or ATP."
+    if code.upper() in excluded_codes:
+        return False
+
+    lowered_name = name.lower()
+    if any(term in lowered_name for term in excluded_name_terms):
+        return False
+
+    if formula_weight is not None and formula_weight < 70:
+        return False
+
+    return True
+
+
+def _extract_chemcomp_smiles(data: dict[str, Any]) -> str:
+    """Extract the best available SMILES field from an RCSB chemcomp record."""
+    descriptors = data.get("rcsb_chem_comp_descriptor", {})
+    candidates = [
+        descriptors.get("smiles_stereo"),
+        descriptors.get("smiles"),
+        descriptors.get("SMILES_stereo"),
+        descriptors.get("SMILES"),
+    ]
+
+    for candidate in candidates:
+        if candidate:
+            return canonicalise_smiles(str(candidate))
+
+    raise ValueError("RCSB did not provide a usable SMILES string for this ligand.")
+
+
+def from_pdb_structure_id(
+    value: str,
+) -> tuple[LigandInput, StructureMetadata]:
+    """Resolve a PDB structure and allow selection of a bound ligand."""
+    pdb_id = value.strip().upper()
+
+    if not re.fullmatch(r"[A-Z0-9]{4}", pdb_id):
+        raise ValueError("PDB structure IDs contain exactly four letters or numbers.")
+
+    entry = request_json(
+        f"https://data.rcsb.org/rest/v1/core/entry/{pdb_id}"
+    )
+
+    identifiers = entry.get("rcsb_entry_container_identifiers", {})
+    entity_ids = identifiers.get("non_polymer_entity_ids") or []
+
+    if not entity_ids:
+        raise ValueError("No bound non-polymer ligands were found in this PDB entry.")
+
+    ligand_options: list[dict[str, Any]] = []
+
+    for entity_id in entity_ids:
+        try:
+            entity = request_json(
+                "https://data.rcsb.org/rest/v1/core/nonpolymer_entity/"
+                f"{pdb_id}/{entity_id}"
+            )
+        except ValueError:
+            continue
+
+        id_data = entity.get(
+            "rcsb_nonpolymer_entity_container_identifiers", {}
+        )
+        code = (
+            id_data.get("nonpolymer_comp_id")
+            or entity.get("pdbx_entity_nonpoly", {}).get("comp_id")
         )
 
-    data = request_json(f"{RCSB_BASE_URL}/{code}")
+        if not code:
+            continue
 
-    descriptor_data = data.get("rcsb_chem_comp_descriptor", {})
-    smiles = (
-        descriptor_data.get("smiles_stereo")
-        or descriptor_data.get("smiles")
+        entity_data = entity.get("rcsb_nonpolymer_entity", {})
+        name = (
+            entity_data.get("pdbx_description")
+            or entity.get("pdbx_entity_nonpoly", {}).get("name")
+            or str(code)
+        )
+
+        formula_weight = entity_data.get("formula_weight")
+        if formula_weight is not None:
+            try:
+                formula_weight = float(formula_weight) * 1000
+            except (TypeError, ValueError):
+                formula_weight = None
+
+        if not _is_likely_small_molecule_ligand(
+            str(code), str(name), formula_weight
+        ):
+            continue
+
+        ligand_options.append(
+            {
+                "code": str(code).upper(),
+                "name": str(name),
+                "entity_id": str(entity_id),
+            }
+        )
+
+    if not ligand_options:
+        raise ValueError(
+            "No likely small-molecule ligand could be identified in this entry."
+        )
+
+    if len(ligand_options) == 1:
+        selected = ligand_options[0]
+    else:
+        print("\nBound ligands found:")
+        for index, option in enumerate(ligand_options, start=1):
+            print(f"{index}. {option['name']} ({option['code']})")
+
+        selection = input("\nChoose ligand number: ").strip()
+
+        try:
+            selected = ligand_options[int(selection) - 1]
+        except (ValueError, IndexError) as error:
+            raise ValueError("Invalid ligand selection.") from error
+
+    chemcomp = request_json(
+        f"https://data.rcsb.org/rest/v1/core/chemcomp/{selected['code']}"
     )
+    smiles = _extract_chemcomp_smiles(chemcomp)
 
-    if not smiles:
-        raise ValueError("The PDB record did not provide a usable SMILES string.")
+    title = entry.get("struct", {}).get("title") or f"PDB structure {pdb_id}"
 
-    chem_comp = data.get("chem_comp", {})
-    name = chem_comp.get("name") or code
+    methods = entry.get("exptl") or []
+    experimental_method = ", ".join(
+        str(item.get("method"))
+        for item in methods
+        if item.get("method")
+    ) or "Not reported"
 
-    return LigandInput(
-        source="RCSB PDB chemical component",
+    resolution_values = (
+        entry.get("rcsb_entry_info", {}).get("resolution_combined") or []
+    )
+    resolution = None
+    if resolution_values:
+        try:
+            resolution = float(resolution_values[0])
+        except (TypeError, ValueError):
+            resolution = None
+
+    ligand = LigandInput(
+        source="RCSB PDB structure",
         original_value=value,
-        name=name.title(),
-        smiles=canonicalise_smiles(smiles),
-        external_id=code,
+        name=selected["name"].title(),
+        smiles=smiles,
+        external_id=selected["code"],
     )
+
+    structure = StructureMetadata(
+        pdb_id=pdb_id,
+        title=str(title),
+        experimental_method=experimental_method,
+        resolution=resolution,
+        ligand_code=selected["code"],
+    )
+
+    return ligand, structure
 
 
 def calculate_descriptors(molecule: Chem.Mol) -> MolecularDescriptors:
@@ -294,15 +446,15 @@ def status_symbol(passed: bool) -> str:
     return "[PASS]" if passed else "[FAIL]"
 
 
-def choose_input() -> LigandInput:
+def choose_input() -> tuple[LigandInput, StructureMetadata | None]:
     """Display the input menu and resolve the chosen ligand."""
-    print("\nLigandScout")
+    print("\nDockAssist")
     print("=" * 58)
     print("Choose an input type:")
     print("1. Compound or drug name")
     print("2. SMILES")
     print("3. PubChem CID")
-    print("4. PDB ligand code")
+    print("4. PDB structure ID")
 
     choice = input("\nSelection: ").strip()
 
@@ -310,7 +462,7 @@ def choose_input() -> LigandInput:
         "1": "Enter compound or drug name: ",
         "2": "Enter SMILES: ",
         "3": "Enter PubChem CID: ",
-        "4": "Enter PDB ligand code: ",
+        "4": "Enter PDB structure ID: ",
     }
 
     if choice not in prompts:
@@ -322,21 +474,27 @@ def choose_input() -> LigandInput:
         "1": from_compound_name,
         "2": from_smiles,
         "3": from_pubchem_cid,
-        "4": from_pdb_ligand_code,
+        "4": from_pdb_structure_id,
     }
 
-    return resolvers[choice](value)
+    resolved = resolvers[choice](value)
+
+    if choice == "4":
+        return resolved
+
+    return resolved, None
 
 
 def display_results(
     ligand: LigandInput,
+    structure: StructureMetadata | None,
     descriptors: MolecularDescriptors,
     lipinski_result: dict[str, Any],
     ligand_assessment: dict[str, Any],
 ) -> None:
     """Print the ligand pre-screen report."""
     print("\n" + "=" * 58)
-    print("LigandScout — Ligand Pre-Screening Report")
+    print("DockAssist — Ligand Pre-Screening Report")
     print("=" * 58)
 
     print("\nResolved Ligand")
@@ -347,6 +505,18 @@ def display_results(
     if ligand.external_id:
         print(f"External ID     : {ligand.external_id}")
     print(f"Canonical SMILES: {ligand.smiles}")
+
+    if structure is not None:
+        print("\nPDB Structure")
+        print("-" * 58)
+        print(f"PDB ID              : {structure.pdb_id}")
+        print(f"Structure title     : {structure.title}")
+        print(f"Experimental method : {structure.experimental_method}")
+        if structure.resolution is not None:
+            print(f"Resolution          : {structure.resolution:.2f} A")
+        else:
+            print("Resolution          : Not reported")
+        print(f"Selected ligand     : {ligand.name} ({structure.ligand_code})")
 
     print("\nMolecular Descriptors")
     print("-" * 58)
@@ -382,15 +552,15 @@ def display_results(
     print("\nScientific Limitation")
     print("-" * 58)
     print(
-        "LigandScout does not predict receptor binding, docking score, pose accuracy, "
+        "DockAssist does not predict receptor binding, docking score, pose accuracy, "
         "selectivity, or biological activity."
     )
 
 
 def main() -> int:
-    """Run LigandScout."""
+    """Run DockAssist."""
     try:
-        ligand = choose_input()
+        ligand, structure = choose_input()
         molecule = validate_smiles(ligand.smiles)
         descriptors = calculate_descriptors(molecule)
         lipinski_result = check_lipinski(descriptors)
@@ -398,6 +568,7 @@ def main() -> int:
 
         display_results(
             ligand=ligand,
+            structure=structure,
             descriptors=descriptors,
             lipinski_result=lipinski_result,
             ligand_assessment=ligand_assessment,
