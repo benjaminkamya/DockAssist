@@ -1,5 +1,5 @@
 """
-LigandScout — Ligand Pre-Screener for Molecular Docking
+DockAssist. — Ligand Pre-Screener for Molecular Docking
 
 Accepts a ligand as:
 1. Compound or drug name
