@@ -12,13 +12,24 @@ Rather than predicting binding affinity, DockAssist focuses on providing a rapid
 
 ---
 
+## Project Status
+
+DockAssist is currently under active development.
+
+The current version supports ligand retrieval through compound names, SMILES, PubChem CIDs and PDB Structure IDs. Molecular descriptors are calculated using RDKit before providing a ligand-level pre-screening assessment. Future versions will expand reporting, visualisation and structural analysis features.
+
+---
+
 ## Features
 
 - Accept ligand input through:
   - Compound or drug name
   - SMILES
   - PubChem CID
-  - *(Planned)* PDB Structure ID
+  - PDB Structure ID
+- Retrieve ligand information from:
+  - PubChem
+  - RCSB Protein Data Bank
 - Calculate molecular descriptors using RDKit
   - Molecular Weight (MW)
   - LogP
@@ -29,6 +40,12 @@ Rather than predicting binding affinity, DockAssist focuses on providing a rapid
   - Heavy Atom Count
   - Ring Count
 - Evaluate Lipinski's Rule of Five
+- Display PDB metadata including:
+  - Structure ID
+  - Structure title
+  - Experimental method
+  - Resolution
+  - Bound ligand
 - Provide a rule-based ligand pre-screening assessment
 - Simple command-line interface
 
@@ -52,35 +69,38 @@ Run the program:
 python dock_assist.py
 ```
 
-Choose an input method and enter the requested information.
+Choose an input method:
 
-Example:
-
-```
+```text
 1. Compound Name
 2. SMILES
 3. PubChem CID
-4. PDB Structure ID (Coming Soon)
+4. PDB Structure ID
 ```
 
 ---
 
 ## Example Output
 
-```
+```text
 ==========================================================
 DockAssist
 Ligand Pre-Screening Report
 ==========================================================
 
-Name            : Benzamidine
+PDB ID              : 3PTB
+Structure           : Trypsin
+Experimental Method : X-Ray Diffraction
+Resolution          : 1.80 Å
 
-Molecular Weight : 120.15 Da
-LogP             : 0.97
-TPSA             : 49.87 Å²
-H-Bond Donors    : 2
-H-Bond Acceptors : 1
-Rotatable Bonds  : 1
+Ligand              : Benzamidine (BEN)
+
+Molecular Weight    : 120.15 Da
+LogP                : 0.97
+TPSA                : 49.87 Å²
+H-Bond Donors       : 2
+H-Bond Acceptors    : 1
+Rotatable Bonds     : 1
 
 Lipinski Assessment
 -------------------
@@ -89,37 +109,30 @@ PASS
 Assessment
 ----------
 No obvious ligand-level physicochemical concerns were detected.
-
-Scientific Limitation
----------------------
-DockAssist does not predict receptor binding, docking scores,
-binding affinity, selectivity or biological activity.
 ```
 
 ---
 
 ## Roadmap
 
-### Version 0.5.0 (Current)
+### Version 0.6.0 (Current)
 
 - Compound name lookup
 - SMILES input
 - PubChem CID input
+- PDB Structure ID support
+- Protein metadata retrieval
 - Molecular descriptor calculation
 - Lipinski assessment
 
 ### Version 1.0.0
 
-- PDB Structure ID support
-- Protein metadata retrieval
-- Automatic identification of bound ligands
-- Ligand descriptor analysis from PDB structures
+- Export reports
+- 2D ligand visualisation
+- Batch ligand screening
 
 ### Future Development
 
-- 2D ligand visualisation
-- CSV export
-- Batch ligand screening
 - Ligand similarity searching
 - Protein-aware ligand comparison
 - Machine learning-assisted ligand prioritisation
@@ -131,16 +144,16 @@ binding affinity, selectivity or biological activity.
 - Python
 - RDKit
 - PubChem
-- RCSB Protein Data Bank (planned)
+- RCSB Protein Data Bank
 
 ---
 
 ## Scientific Note
 
-DockAssist is designed as a **ligand pre-screening tool**, not a docking engine. It evaluates molecular descriptors that are commonly considered before molecular docking studies but does **not** predict binding affinity or docking outcomes.
+DockAssist is designed as a **ligand pre-screening tool**, not a docking engine. It evaluates molecular descriptors commonly considered before molecular docking studies but does **not** predict binding affinity, docking scores, binding poses, selectivity or biological activity.
 
 ---
 
 ## License
 
-MIT License
+This project is released under the **MIT License**.
