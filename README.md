@@ -1,6 +1,6 @@
-# LigandScout — Ligand Pre-Screening for Molecular Docking
+# DockAssist — Ligand Pre-Screening for Molecular Docking
 
-LigandScout is a Python command-line tool that accepts a ligand by compound name, SMILES, PubChem CID, or PDB chemical component code. It resolves the molecular structure, calculates RDKit descriptors, applies Lipinski-style checks, and reports potential ligand-level concerns before molecular docking.
+DockAssist is a Python command-line tool that accepts a ligand by compound name, SMILES, PubChem CID, or PDB chemical component code. It resolves the molecular structure, calculates RDKit descriptors, applies Lipinski-style checks, and reports potential ligand-level concerns before molecular docking.
 
 ## Input methods
 
@@ -37,4 +37,4 @@ Enter compound or drug name: benzamidine
 
 ## Scientific limitation
 
-LigandScout performs ligand-level physicochemical pre-screening. It does not predict receptor binding, docking score, pose accuracy, selectivity, or biological activity.
+DockAssist performs ligand-level physicochemical pre-screening. It does not predict receptor binding, docking score, pose accuracy, selectivity, or biological activity.
