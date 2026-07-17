@@ -15,6 +15,7 @@ While investigating the reproducibility of molecular docking workflows, I found 
 Although DockAssist does not perform molecular docking itself, it reflects the practical lessons learned throughout that project and continues to evolve alongside my studies in AI for drug discovery
 
 📄 **Read the dissertation:** [Docking Reproducibility: Vina, Smina and GOLD Compared](https://github.com/benjaminkamya/Undergraduate-Dissertation) 
+
 ---
  
 
