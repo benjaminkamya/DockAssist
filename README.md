@@ -12,10 +12,11 @@ DockAssist was inspired by my undergraduate dissertation:
 
 While investigating the reproducibility of molecular docking workflows, I found myself repeatedly performing the same ligand preparation and pre screening tasks before docking. DockAssist was created to streamline that part of the workflow by providing rapid physicochemical assessment of ligands before molecular docking.
 
-Although DockAssist does not perform docking itself, it reflects the practical lessons learned throughout that project and continues to evolve alongside my studies in computational drug discovery.
+Although DockAssist does not perform molecular docking itself, it reflects the practical lessons learned throughout that project and continues to evolve alongside my studies in AI for drug discovery
 
-📄 **Dissertation:** 
+📄 **Read the dissertation:** [Docking Reproducibility: Vina, Smina and GOLD Compared](https://github.com/benjaminkamya/Undergraduate-Dissertation) 
 ---
+ 
 
 ## Project Status
 
