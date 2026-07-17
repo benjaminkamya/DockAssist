@@ -6,11 +6,15 @@
 
 ## Origin
 
-DockAssist was inspired by my undergraduate dissertation 
+DockAssist was inspired by my undergraduate dissertation:
 
-The project began as an attempt to streamline ligand pre screening before molecular docking by automating descriptor calculation and providing rapid physicochemical assessment.
+**Docking Reproducibility: Vina, Smina and GOLD Compared**
 
-Rather than predicting binding affinity, DockAssist focuses on providing a rapid summary of molecular properties commonly examined during ligand selection. It is intended as a practical utility for computational drug discovery and structural biology workflows.
+While investigating the reproducibility of molecular docking workflows, I found myself repeatedly performing the same ligand preparation and pre screening tasks before docking. DockAssist was created to streamline that part of the workflow by providing rapid physicochemical assessment of ligands before molecular docking.
+
+Although DockAssist does not perform docking itself, it reflects the practical lessons learned throughout that project and continues to evolve alongside my studies in computational drug discovery.
+
+📄 **Dissertation:** 
 ---
 
 ## Project Status
