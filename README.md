@@ -4,12 +4,13 @@
 
 ---
 
-## Background
+## Origin
 
-DockAssist was inspired by my undergraduate dissertation investigating the reproducibility of molecular docking workflows. During that project, I often found myself wishing for a lightweight tool that could quickly characterise ligands before beginning docking experiments.
+DockAssist was inspired by my undergraduate dissertation 
+
+The project began as an attempt to streamline ligand pre screening before molecular docking by automating descriptor calculation and providing rapid physicochemical assessment.
 
 Rather than predicting binding affinity, DockAssist focuses on providing a rapid summary of molecular properties commonly examined during ligand selection. It is intended as a practical utility for computational drug discovery and structural biology workflows.
-
 ---
 
 ## Project Status
