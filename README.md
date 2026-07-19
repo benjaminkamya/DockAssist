@@ -43,6 +43,8 @@ DockAssist was developed following my undergraduate dissertation:
 
 The project was created to streamline ligand pre-screening tasks commonly performed before molecular docking.
 
+DockAssist was created to make computational chemistry more accessible. During my studies, I found that many tools and tutorials assumed prior knowledge and were difficult for beginners to approach. DockAssist aims to bridge that gap by providing clear, visual, and educational ligand pre-screening without paywalls or unnecessary complexity.
+
 📄 Dissertation:
 https://github.com/benjaminkamya/Undergraduate-Dissertation 
 
