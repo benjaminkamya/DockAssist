@@ -1,5 +1,5 @@
 """
-DockAssist — Ligand Pre-Screener for Molecular Docking
+DockAssist — Ligand Pre-Screener for Molecular Docking :)
 
 Screens ligands with RDKit descriptors, Lipinski's rules and docking-oriented
 checks. Input can be a compound name, SMILES, PubChem CID or PDB structure ID.
