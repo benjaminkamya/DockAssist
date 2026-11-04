@@ -1,2 +1,4 @@
 rdkit
 requests
+pandas
+matplotlib

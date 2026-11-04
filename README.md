@@ -1,6 +1,6 @@
 # DockAssist
 
-DockAssist is a Python command-line tool for pre-screening small-molecule ligands before molecular docking. It supports compound names, SMILES, PubChem CIDs and PDB structure IDs, calculates molecular descriptors using RDKit, evaluates Lipinski's Rule of Five, and provides a ligand-level assessment.
+DockAssist is a Python command-line tool for pre-screening small-molecule ligands before molecular docking. It supports compound names, SMILES, PubChem CIDs and PDB structure IDs, calculates molecular descriptors using RDKit, evaluates Lipinski's Rule of Five, and provides a ligand-level assessment. It can screen one ligand at a time or a whole CSV of ligands, and plots batches in chemical space.
 
 ![DockAssist Demo](demo.png)
 
@@ -13,6 +13,11 @@ DockAssist is a Python command-line tool for pre-screening small-molecule ligand
 - Docking-oriented physicochemical screening
 - PDB structure metadata retrieval
 - Human-readable terminal reports
+- Batch screening of a CSV of ligands, with data cleaning:
+  - failed lookups and invalid SMILES are logged instead of crashing the run
+  - duplicates are removed by canonical SMILES
+  - results table, error log and summary statistics are saved
+- Chemical-space plot (molecular weight vs logP) with the Lipinski region marked
 
 ## Installation
 
@@ -33,7 +38,30 @@ Choose an input type:
 2. SMILES
 3. PubChem CID
 4. PDB structure ID
+5. Batch screen a CSV file (with chemical-space plot)
 ```
+
+Option 5 asks for a CSV file; press Enter to use the included `example_ligands.csv`. The plot opens automatically and is saved, with the results table, to a `results/` folder.
+
+To run a batch directly:
+
+```bash
+python DockAssist.py --batch example_ligands.csv --out results
+```
+
+### Batch CSV format
+
+| Column | Required | Meaning |
+|---|---|---|
+| `input` | yes | Compound name, SMILES or PubChem CID |
+| `type` | no | `name`, `smiles` or `cid` (guessed if blank) |
+| `name` | no | Label used in the results table and plot |
+
+## Example batch result
+
+![Screened ligands in chemical space](chemical_space.png)
+
+In the example set, atorvastatin and itraconazole both fail two of Lipinski's rules, yet both are approved oral drugs. The rules are useful for prioritising compounds, not for ruling them out.
 
 ## Origin
 
@@ -52,6 +80,8 @@ https://github.com/benjaminkamya/Undergraduate-Dissertation
 
 - Python
 - RDKit
+- pandas
+- Matplotlib
 - PubChem
 - RCSB Protein Data Bank
 
