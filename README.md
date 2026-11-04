@@ -1,6 +1,6 @@
 # DockAssist
 
-DockAssist is a Python command-line tool for pre-screening small-molecule ligands before molecular docking. It supports compound names, SMILES, PubChem CIDs and PDB structure IDs, calculates molecular descriptors using RDKit, evaluates Lipinski's Rule of Five, and provides a ligand-level assessment. It can screen one ligand at a time or a whole CSV of ligands, and plots batches in chemical space.
+DockAssist is a Python command-line tool for pre-screening small-molecule ligands before molecular docking. It supports compound names, SMILES, PubChem CIDs and PDB structure IDs, calculates molecular descriptors using RDKit, evaluates Lipinski's Rule of Five, and provides a ligand-level assessment. It can screen one ligand at a time or a whole CSV of ligands, and plots batches in chemical space..
 
 ![DockAssist Demo](demo.png)
 
